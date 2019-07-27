@@ -7,3 +7,5 @@
 .idea
 .env
 .phpunit.result.cache
+
+node_modules/

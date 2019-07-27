@@ -44,5 +44,8 @@
     "psr-4": {
       "SPSS\\Tests\\": "tests/"
     }
+  },
+  "scripts": {
+    "test": "phpunit -c tests/"
   }
 }

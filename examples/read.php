@@ -4,7 +4,8 @@ require __DIR__ . '/../vendor/autoload.php';
 
 $files = [
     // __DIR__ . '/test2.sav',
-    __DIR__ . '/data.sav',
+    __DIR__ . '/huge_php_broken.sav',
+    __DIR__ . '/huge_php_fixed.sav',
 ];
 
 function __header($str, $char = '#')
@@ -43,23 +44,23 @@ foreach ($files as $file) {
 
     echo __header(sprintf('OPEN FILE %s', $file));
 
-    echo __title('Header');
-    echo __content($reader->header);
+//    echo __title('Header');
+//    echo __content($reader->header);
 
-    echo __title('Documents');
-    echo __content($reader->documents);
+//    echo __title('Documents');
+//    echo __content($reader->documents);
 
-    echo __title('Variables');
-    echo __content($reader->variables);
+//    echo __title('Variables');
+//    echo __content($reader->variables);
 
     echo __title('Values-labels');
     echo __content($reader->valueLabels);
 
-    echo __title('Additional-info');
-    echo __content($reader->info);
+//    echo __title('Additional-info');
+//    echo __content($reader->info);
 
-    echo __title('Data');
-    echo __content($reader->data);
+//    echo __title('Data');
+//    echo __content($reader->data);
 
     echo PHP_EOL;
 }

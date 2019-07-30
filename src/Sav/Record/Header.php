@@ -52,7 +52,7 @@ class Header extends Record
      * 2 if the data is ZLIB compressed.
      * This field has value 2 if and only if recType is ‘$FL3’.
      */
-    public $compression = 1;
+    public $compression = 0;
 
     /**
      * @var int If one of the variables in the data set is used as a weighting variable,

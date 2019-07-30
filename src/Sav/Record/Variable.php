@@ -129,6 +129,7 @@ class Variable extends Record
     public function write(Buffer $buffer)
     {
         $seg0width = Utils::segmentAllocWidth($this->width, 0);
+        echo '$seg0width = ' . $seg0width . PHP_EOL;
         $hasLabel = ! empty($this->label);
 
         $buffer->writeInt(self::TYPE);
@@ -171,8 +172,10 @@ class Variable extends Record
         if (self::isVeryLong($this->width)) {
             $this->writeBlank($buffer, $seg0width);
             $segmentCount = Utils::widthToSegments($this->width);
+            echo '$segmentCount = ' . $segmentCount . PHP_EOL;
             for ($i = 1; $i < $segmentCount; $i++) {
                 $segmentWidth = Utils::segmentAllocWidth($this->width, $i);
+                echo '$segmentWidth = ' . $segmentWidth . PHP_EOL;
                 $format = Utils::bytesToInt([0, 1, max($segmentWidth, 1), 0]);
                 $buffer->writeInt(self::TYPE);
                 $buffer->writeInt($segmentWidth);
@@ -180,7 +183,11 @@ class Variable extends Record
                 $buffer->writeInt(0); // No missing values
                 $buffer->writeInt($format); // Print format
                 $buffer->writeInt($format); // Write format
-                $buffer->writeString($this->getSegmentName($i - 1), 8);
+                $segmentName = $this->getSegmentName($i - 1);
+
+                echo '$segmentName = ' . $segmentName . PHP_EOL;
+
+                $buffer->writeString($segmentName, 8);
                 if ($hasLabel) {
                     $buffer->writeInt($labelLengthBytes);
                     $buffer->writeString($label, Utils::roundUp($labelLengthBytes, 4));
@@ -198,6 +205,7 @@ class Variable extends Record
     public function writeBlank(Buffer $buffer, $width)
     {
         // assert(self::widthToSegments($width) == 1);
+        echo 'Writing a blank... ' . $width . PHP_EOL;
 
         for ($i = 8; $i < $width; $i += 8) {
             $buffer->writeInt(self::TYPE);

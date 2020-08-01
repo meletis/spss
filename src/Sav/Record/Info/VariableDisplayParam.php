@@ -10,36 +10,18 @@ class VariableDisplayParam extends Info
 {
     const SUBTYPE = 11;
 
-    /**
-     * @var array
-     */
     public $data = [];
 
-    /**
-     * @var int
-     */
     protected $dataSize = 4;
 
-    /**
-     * @param Buffer $buffer
-     * @throws Exception
-     */
     public function read(Buffer $buffer)
     {
         parent::read($buffer);
-        if ($this->dataSize != 4) {
-            throw new Exception(
-                sprintf('Error reading record type 7 subtype 11: bad data element length [%s]. Expecting 4.',
-                    $this->dataSize
-                )
-            );
+        if (4 !== $this->dataSize) {
+            throw new Exception(sprintf('Error reading record type 7 subtype 11: bad data element length [%s]. Expecting 4.', $this->dataSize));
         }
-        if (($this->dataCount % 3) != 0) {
-            throw new Exception(
-                sprintf('Error reading record type 7 subtype 11: number of data elements [%s] is not a multiple of 3.',
-                    $this->dataCount
-                )
-            );
+        if (0 !== ($this->dataCount % 3)) {
+            throw new Exception(sprintf('Error reading record type 7 subtype 11: number of data elements [%s] is not a multiple of 3.', $this->dataCount));
         }
         $itemCount = $this->dataCount / 3;
         for ($i = 0; $i < $itemCount; $i++) {
@@ -51,13 +33,10 @@ class VariableDisplayParam extends Info
         }
     }
 
-    /**
-     * @param Buffer $buffer
-     */
     public function write(Buffer $buffer)
     {
-        if ($this->data) {
-            $this->dataCount = count($this->data) * 3;
+        if ($this->data !== []) {
+            $this->dataCount = \count($this->data) * 3;
             parent::write($buffer);
             foreach ($this->data as $item) {
                 $buffer->writeInt(0xFF & $item[0]);

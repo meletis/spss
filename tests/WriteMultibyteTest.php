@@ -8,11 +8,10 @@ use SPSS\Sav\Writer;
 
 class WriteMultibyteTest extends TestCase
 {
-
     public function testMultiByteLabel()
     {
-        $data   = [
-            'header'    => [
+        $data = [
+            'header' => [
                 'prodName'     => '@(#) IBM SPSS STATISTICS',
                 'layoutCode'   => 2,
                 'creationDate' => date('d M y'),
@@ -46,21 +45,23 @@ class WriteMultibyteTest extends TestCase
         $this->assertEquals($data['variables'][0]['label'], $reader->variables[0]->label);
 
         // Long variable label
-        $this->assertEquals(mb_substr($data['variables'][1]['values'][1], 0, -2, 'UTF-8'), $reader->variables[1]->label);
-        
+        $this->assertEquals(mb_substr($data['variables'][1]['values'][1], 0, -2, 'UTF-8'),
+            $reader->variables[1]->label);
+
         // Long value label
-        $this->assertEquals(mb_substr($data['variables'][1]['label'], 0, -2, 'UTF-8'), $reader->valueLabels[0]->labels[0]['label']);
+        $this->assertEquals(mb_substr($data['variables'][1]['label'], 0, -2, 'UTF-8'),
+            $reader->valueLabels[0]->labels[0]['label']);
     }
-    
+
     /**
-     * ISSUE #20
-     * 
+     * ISSUE #20.
+     *
      * Chinese value labels seem to work fine, but free text does not work
      */
     public function testChinese()
     {
         $input = [
-            'header'    => [
+            'header' => [
                 'prodName'     => '@(#) IBM SPSS STATISTICS 64-bit Macintosh 23.0.0.0',
                 'creationDate' => '05 Oct 18',
                 'creationTime' => '01:36:53',
@@ -68,12 +69,12 @@ class WriteMultibyteTest extends TestCase
             ],
             'variables' => [
                 [
-                    'name'       => 'test1',
-                    'format'     => Variable::FORMAT_TYPE_F,
-                    'width'      => 4, 
-                    'decimals'   => 2,
-                    'label'      => 'test',
-                    'values'     => [
+                    'name'     => 'test1',
+                    'format'   => Variable::FORMAT_TYPE_F,
+                    'width'    => 4,
+                    'decimals' => 2,
+                    'label'    => 'test',
+                    'values'   => [
                         1 => '1测试中文标签1',
                         2 => '2测试中文标签2',
                     ],
@@ -84,8 +85,8 @@ class WriteMultibyteTest extends TestCase
                     'attributes' => [
                         '$@Role' => Variable::ROLE_PARTITION,
                     ],
-                    'data'       => [1, 1, 1],
-                    ],
+                    'data' => [1, 1, 1],
+                ],
                 [
                     'name'       => 'test2',
                     'format'     => Variable::FORMAT_TYPE_A,
@@ -97,19 +98,20 @@ class WriteMultibyteTest extends TestCase
                     'attributes' => [
                         '$@Role' => Variable::ROLE_SPLIT,
                     ],
-                    'data'       => [
+                    'data' => [
                         '测试中文数据1',
                         '测试中文数据2',
-                        '测试中文数据3'
+                        '测试中文数据3',
                     ],
                 ],
             ],
         ];
-        
+
         $writer = new Writer($input);
-        
+
         // Uncomment if you want to really save and check the resulting file in SPSS
-        //$writer->save('chinese1.sav');
+        // $writer->save('chinese1.sav');
+
         $buffer = $writer->getBuffer();
         $buffer->rewind();
 
@@ -122,5 +124,4 @@ class WriteMultibyteTest extends TestCase
         $expected[2][1] = $input['variables'][1]['data'][2];
         $this->assertEquals($expected, $reader->data);
     }
-
 }

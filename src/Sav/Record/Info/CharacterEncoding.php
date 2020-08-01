@@ -13,32 +13,22 @@ class CharacterEncoding extends Info
      * @var string
      */
     public $value;
-    
-    /**
-     * Record constructor.
-     *
-     * @param array $data
-     */
+
+    /** @noinspection MagicMethodsValidityInspection */
     public function __construct($value)
     {
         $this->value = $value;
     }
 
-    /**
-     * @param Buffer $buffer
-     */
     public function read(Buffer $buffer)
     {
         parent::read($buffer);
         $this->value = $buffer->readString($this->dataSize * $this->dataCount);
     }
 
-    /**
-     * @param Buffer $buffer
-     */
     public function write(Buffer $buffer)
     {
-        $this->dataCount = strlen($this->value);
+        $this->dataCount = \strlen($this->value);
         parent::write($buffer);
         $buffer->writeString($this->value);
     }

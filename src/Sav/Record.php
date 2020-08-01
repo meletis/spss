@@ -19,8 +19,9 @@ abstract class Record implements RecordInterface
     }
 
     /**
-     * @param Buffer $buffer
-     * @param array $data
+     * @param  Buffer  $buffer
+     * @param  array  $data
+     *
      * @return static
      */
     public static function fill(Buffer $buffer, $data = [])
@@ -29,6 +30,16 @@ abstract class Record implements RecordInterface
         $record->read($buffer);
 
         return $record;
+    }
+
+    /**
+     * @param array $data
+     *
+     * @return static
+     */
+    public static function create($data = [])
+    {
+        return new static($data);
     }
 
     /**

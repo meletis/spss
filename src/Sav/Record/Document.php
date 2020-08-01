@@ -7,7 +7,7 @@ use SPSS\Sav\Record;
 
 class Document extends Record implements \ArrayAccess
 {
-    const TYPE = 6;
+    const TYPE   = 6;
     const LENGTH = 80;
 
     /**
@@ -15,9 +15,6 @@ class Document extends Record implements \ArrayAccess
      */
     protected $lines = [];
 
-    /**
-     * @param Buffer $buffer
-     */
     public function read(Buffer $buffer)
     {
         $count = $buffer->readInt();
@@ -26,13 +23,10 @@ class Document extends Record implements \ArrayAccess
         }
     }
 
-    /**
-     * @param Buffer $buffer
-     */
     public function write(Buffer $buffer)
     {
         $buffer->writeInt(self::TYPE);
-        $buffer->writeInt(count($this->lines));
+        $buffer->writeInt(\count($this->lines));
         foreach ($this->lines as $line) {
             $buffer->writeString((string) $line, self::LENGTH);
         }
@@ -58,6 +52,7 @@ class Document extends Record implements \ArrayAccess
 
     /**
      * @param mixed $offset
+     *
      * @return bool
      */
     public function offsetExists($offset)
@@ -67,6 +62,7 @@ class Document extends Record implements \ArrayAccess
 
     /**
      * @param mixed $offset
+     *
      * @return mixed
      */
     public function offsetGet($offset)

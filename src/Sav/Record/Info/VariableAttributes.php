@@ -9,14 +9,8 @@ class VariableAttributes extends Info
 {
     const SUBTYPE = 18;
 
-    /**
-     * @var array
-     */
     public $data = [];
 
-    /**
-     * @param Buffer $buffer
-     */
     public function read(Buffer $buffer)
     {
         parent::read($buffer);
@@ -34,14 +28,11 @@ class VariableAttributes extends Info
         }
     }
 
-    /**
-     * @param Buffer $buffer
-     */
     public function write(Buffer $buffer)
     {
         $lines = [];
         foreach ($this->data as $var => $value) {
-            if (is_array($value)) {
+            if (\is_array($value)) {
                 $_tmpString = '';
                 foreach ($value as $key => $val) {
                     $_tmpString .= sprintf("%s('%s'\n)", $key, $val);
@@ -51,8 +42,8 @@ class VariableAttributes extends Info
             $lines[] = sprintf('%s:%s', $var, $value);
         }
 
-        if ($lines) {
-            $data = implode('/', $lines);
+        if ($lines !== []) {
+            $data            = implode('/', $lines);
             $this->dataCount = mb_strlen($data);
             parent::write($buffer);
             $buffer->writeString($data);

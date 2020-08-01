@@ -7,17 +7,11 @@ use SPSS\Sav\Record\Info;
 
 class LongVariableNames extends Info
 {
-    const SUBTYPE = 13;
+    const SUBTYPE   = 13;
     const DELIMITER = "\t";
 
-    /**
-     * @var array
-     */
     public $data = [];
 
-    /**
-     * @param Buffer $buffer
-     */
     public function read(Buffer $buffer)
     {
         parent::read($buffer);
@@ -29,16 +23,13 @@ class LongVariableNames extends Info
         }
     }
 
-    /**
-     * @param Buffer $buffer
-     */
     public function write(Buffer $buffer)
     {
         $data = '';
         foreach ($this->data as $key => $value) {
             $data .= sprintf('%s=%s', $key, $value) . self::DELIMITER;
         }
-        $this->dataCount = strlen($data);
+        $this->dataCount = \strlen($data);
         parent::write($buffer);
         $buffer->writeString($data);
     }

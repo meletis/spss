@@ -32,12 +32,12 @@ class Buffer
     /**
      * Buffer constructor.
      *
-     * @param resource $stream Stream resource to wrap.
-     * @param array $options Associative array of options.
+     * @param resource $stream  stream resource to wrap
+     * @param array    $options associative array of options
      */
     private function __construct($stream, $options = [])
     {
-        if (! is_resource($stream)) {
+        if (!\is_resource($stream)) {
             throw new \InvalidArgumentException('Stream must be a resource.');
         }
         $this->_stream = $stream;
@@ -51,19 +51,20 @@ class Buffer
      * Create a new stream based on the input type.
      *
      * @param resource|string $resource Entity body data
-     * @param array $options Additional options
+     * @param array           $options  Additional options
+     *
      * @return Buffer
      */
     public static function factory($resource = '', $options = [])
     {
-        $type = gettype($resource);
+        $type = \gettype($resource);
 
         switch ($type) {
             case 'string':
                 $stream = isset($options['memory']) ?
-                    fopen('php://memory', 'r+') :
-                    fopen('php://temp', 'r+');
-                if ($resource !== '') {
+                    fopen('php://memory', 'rb+') :
+                    fopen('php://temp', 'rb+');
+                if ('' !== $resource) {
                     fwrite($stream, $resource);
                     fseek($stream, 0);
                 }
@@ -81,14 +82,16 @@ class Buffer
     }
 
     /**
-     * @param int $length
+     * @param int  $length
      * @param bool $skip
-     * @return Buffer
+     *
      * @throws Exception
+     *
+     * @return Buffer
      */
     public function allocate($length, $skip = true)
     {
-        $stream = fopen('php://memory', 'r+');
+        $stream = fopen('php://memory', 'rb+');
         if (stream_copy_to_stream($this->_stream, $stream, $length)) {
             if ($skip) {
                 $this->skip($length);
@@ -101,6 +104,7 @@ class Buffer
 
     /**
      * @param int $length
+     *
      * @return void
      */
     public function skip($length)
@@ -110,6 +114,7 @@ class Buffer
 
     /**
      * @param string $file Path to file
+     *
      * @return false|int
      */
     public function saveToFile($file)
@@ -121,12 +126,13 @@ class Buffer
 
     /**
      * @param resource $resource
-     * @param null|int $maxlength
+     * @param int|null $maxlength
+     *
      * @return false|int
      */
     public function writeStream($resource, $maxlength = null)
     {
-        if (! is_resource($resource)) {
+        if (!\is_resource($resource)) {
             throw new \InvalidArgumentException('Invalid resource type.');
         }
 
@@ -150,21 +156,22 @@ class Buffer
     }
 
     /**
-     * @param int $length
-     * @param int $round
+     * @param int  $length
+     * @param int  $round
      * @param null $charset
+     *
      * @return false|string
      */
     public function readString($length, $round = 0, $charset = null)
     {
         if ($bytes = $this->readBytes($length)) {
-            if ($round) {
+            if ($round !== 0) {
                 $this->skip(Utils::roundUp($length, $round) - $length);
             }
             $str = Utils::bytesToString($bytes);
             if ($charset) {
                 $str = mb_convert_encoding($str, 'utf8', $charset);
-            } elseif ($this->charset) {
+            } elseif (!empty($this->charset)) {
                 $str = mb_convert_encoding($str, 'utf8', $this->charset);
             }
 
@@ -176,12 +183,13 @@ class Buffer
 
     /**
      * @param $length
+     *
      * @return false|array
      */
     public function readBytes($length)
     {
         $bytes = $this->read($length);
-        if ($bytes != false) {
+        if (false !== $bytes) {
             return array_values(unpack('C*', $bytes));
         }
 
@@ -190,12 +198,13 @@ class Buffer
 
     /**
      * @param int $length
+     *
      * @return false|string
      */
     public function read($length = null)
     {
         $bytes = stream_get_contents($this->_stream, $length, $this->_position);
-        if ($bytes !== false) {
+        if (false !== $bytes) {
             $this->_position += $length;
         }
 
@@ -205,14 +214,15 @@ class Buffer
     /**
      * @param $data
      * @param int|string $length
-     * @param null $charset
+     * @param null       $charset
+     *
      * @return false|int
      */
     public function writeString($data, $length = '*', $charset = null)
     {
         if ($charset) {
             $data = mb_convert_encoding($data, 'utf8', $charset);
-        } elseif ($this->charset) {
+        } elseif (!empty($this->charset)) {
             $data = mb_convert_encoding($data, 'utf8', $this->charset);
         }
 
@@ -220,8 +230,9 @@ class Buffer
     }
 
     /**
-     * @param string $data
-     * @param null|int $length
+     * @param string   $data
+     * @param int|null $length
+     *
      * @return false|int
      */
     public function write($data, $length = null)
@@ -233,7 +244,7 @@ class Buffer
     }
 
     /**
-     * @return double
+     * @return float
      */
     public function readDouble()
     {
@@ -242,6 +253,7 @@ class Buffer
 
     /**
      * @param $data
+     *
      * @return false|int
      */
     public function writeDouble($data)
@@ -253,6 +265,7 @@ class Buffer
      * @param $data
      * @param $format
      * @param null $length
+     *
      * @return false|int
      */
     public function writeNumeric($data, $format, $length = null)
@@ -270,6 +283,7 @@ class Buffer
 
     /**
      * @param $data
+     *
      * @return false|int
      */
     public function writeFloat($data)
@@ -287,6 +301,7 @@ class Buffer
 
     /**
      * @param $data
+     *
      * @return false|int
      */
     public function writeInt($data)
@@ -304,6 +319,7 @@ class Buffer
 
     /**
      * @param $data
+     *
      * @return false|int
      */
     public function writeShort($data)
@@ -313,6 +329,7 @@ class Buffer
 
     /**
      * @param $length
+     *
      * @return false|int
      */
     public function writeNull($length)
@@ -325,13 +342,14 @@ class Buffer
      */
     public function position()
     {
-        //        return ftell($this->_stream);
+        // return ftell($this->_stream);
         return $this->_position;
     }
 
     /**
      * @param int $offset
      * @param int $whence
+     *
      * @return int
      */
     public function seek($offset, $whence = SEEK_SET)
@@ -361,6 +379,14 @@ class Buffer
     }
 
     /**
+     * @return true|false
+     */
+    public function close()
+    {
+        return fclose($this->_stream);
+    }
+
+    /**
      * @return array
      */
     public function getMetaData()
@@ -369,14 +395,15 @@ class Buffer
     }
 
     /**
-     * @param int $length
+     * @param int    $length
      * @param string $format
-     * @return false|int|float|double
+     *
+     * @return false|int|float|float
      */
     private function readNumeric($length, $format)
     {
         $bytes = $this->read($length);
-        if ($bytes != false) {
+        if (false !== $bytes) {
             if ($this->isBigEndian) {
                 $bytes = strrev($bytes);
             }

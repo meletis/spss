@@ -1,20 +1,37 @@
-dist: trusty
 language: php
+dist: trusty
+
+branches:
+  only:
+    - master
+    - /[0-9]+\.[0-9]+\.[0-9]+/
+
+cache:
+  directories:
+    - $HOME/.composer/cache/
 
 php:
-- 5.5
-- 5.6
-- 7.0
-- 7.1
+  - 5.6
+  - 7.0
+  - 7.1
+  - 7.2
+  - 7.3
+  - 7.4
 
-#before_install:
-#- if [[ ${TRAVIS_PHP_VERSION:0:3} == "5.5" ]]; then composer require --dev --no-update phpunit/phpunit ~4; fi
+#env:
+#  matrix:
+#    - COMPOSER_FLAGS="--prefer-lowest"
+#    - COMPOSER_FLAGS=""
 
 install:
-- composer install --no-interaction --no-suggest
+  - travis_retry composer update --no-interaction --no-suggest --prefer-source
 
 before_script:
-- phpenv config-rm xdebug.ini
+  - phpenv config-rm xdebug.ini || true
 
 script:
-- ./vendor/bin/phing all
+  - composer test
+
+#matrix:
+#  allow_failures:
+#    - php: nightly

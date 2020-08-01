@@ -7,7 +7,7 @@ use SPSS\Sav\Record;
 
 class Info extends Record implements \ArrayAccess
 {
-    const TYPE = 7;
+    const TYPE    = 7;
     const SUBTYPE = 0;
 
     /**
@@ -25,18 +25,12 @@ class Info extends Record implements \ArrayAccess
      */
     protected $dataCount = 0;
 
-    /**
-     * @param Buffer $buffer
-     */
     public function read(Buffer $buffer)
     {
-        $this->dataSize = $buffer->readInt();
+        $this->dataSize  = $buffer->readInt();
         $this->dataCount = $buffer->readInt();
     }
 
-    /**
-     * @param Buffer $buffer
-     */
     public function write(Buffer $buffer)
     {
         $buffer->writeInt(self::TYPE);
@@ -50,11 +44,12 @@ class Info extends Record implements \ArrayAccess
      */
     public function toArray()
     {
-        return (array) $this->data;
+        return $this->data;
     }
 
     /**
      * @param mixed $offset
+     *
      * @return bool
      */
     public function offsetExists($offset)
@@ -64,6 +59,7 @@ class Info extends Record implements \ArrayAccess
 
     /**
      * @param mixed $offset
+     *
      * @return mixed
      */
     public function offsetGet($offset)
@@ -77,7 +73,7 @@ class Info extends Record implements \ArrayAccess
      */
     public function offsetSet($offset, $value)
     {
-        if (is_null($offset)) {
+        if (null === $offset) {
             $this->data[] = $value;
         } else {
             $this->data[$offset] = $value;

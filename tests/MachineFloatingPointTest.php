@@ -12,14 +12,14 @@ class MachineFloatingPointTest extends TestCase
         return [
             [
                 [
-                    'sysmis' => -1,
+                    'sysmis'  => -1,
                     'highest' => 5,
-                    'lowest' => -10,
+                    'lowest'  => -10,
                 ],
                 [
-                    'sysmis' => -1,
+                    'sysmis'  => -1,
                     'highest' => 5,
-                    'lowest' => -10,
+                    'lowest'  => -10,
                 ],
             ],
             [
@@ -27,9 +27,9 @@ class MachineFloatingPointTest extends TestCase
                 // -1.7976931348623E+308 php min double
                 //  1.7976931348623E+308 php max double
                 [
-                    'sysmis' => -1.7976931348623158E+308,
+                    'sysmis'  => -1.7976931348623158E+308,
                     'highest' => 1.7976931348623158E+308,
-                    'lowest' => -1.7976931348623158E+308,
+                    'lowest'  => -1.7976931348623158E+308,
                 ],
             ],
         ];
@@ -37,8 +37,8 @@ class MachineFloatingPointTest extends TestCase
 
     /**
      * @dataProvider provider
-     * @param array $attributes
-     * @param array $expected
+     * @param  array  $attributes
+     * @param  array  $expected
      */
     public function testWriteRead(array $attributes, array $expected)
     {
@@ -55,8 +55,8 @@ class MachineFloatingPointTest extends TestCase
         $this->assertEquals(40, $buffer->position());
         foreach ($expected as $key => $value) {
             $expected = 0;
-            $actual = bcsub($value, $read->{$key});
-            $msg = "Wrong value received for '$key', expected '$value', got '{$read->{$key}}'";
+            $actual   = @bcsub($value, $read->{$key});
+            $msg      = "Wrong value received for '$key', expected '$value', got '{$read->{$key}}'";
             $this->assertEquals($expected, $actual, $msg);
         }
     }

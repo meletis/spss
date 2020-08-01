@@ -3,21 +3,25 @@
 namespace SPSS\Sav;
 
 use SPSS\Buffer;
+use SPSS\Sav\Record\Header;
+use SPSS\Sav\Record\Info;
+use SPSS\Sav\Record\ValueLabel;
+use SPSS\Utils;
 
 class Reader
 {
     /**
-     * @var \SPSS\Sav\Record\Header
+     * @var Header
      */
     public $header;
 
     /**
-     * @var \SPSS\Sav\Record\Variable[]
+     * @var Record\Variable[]
      */
     public $variables = [];
 
     /**
-     * @var \SPSS\Sav\Record\ValueLabel[]
+     * @var ValueLabel[]
      */
     public $valueLabels = [];
 
@@ -27,7 +31,7 @@ class Reader
     public $documents = [];
 
     /**
-     * @var \SPSS\Sav\Record\Info[]
+     * @var Info[]
      */
     public $info = [];
 
@@ -37,33 +41,45 @@ class Reader
     public $data = [];
 
     /**
-     * @var \SPSS\Buffer
+     * @var int
+     */
+    public $lastCase = -1;
+
+    /**
+     * @var record
+     */
+    public $record;
+
+    /**
+     * @var Buffer
      */
     protected $_buffer;
 
     /**
      * Reader constructor.
      *
-     * @param \SPSS\Buffer $buffer
+     * @param  Buffer  $buffer
      */
     private function __construct(Buffer $buffer)
     {
-        $this->_buffer = $buffer;
+        $this->_buffer          = $buffer;
         $this->_buffer->context = $this;
     }
 
     /**
      * @param string $file
-     * @return \SPSS\Sav\Reader
+     *
+     * @return Reader
      */
     public static function fromFile($file)
     {
-        return new self(Buffer::factory(fopen($file, 'r')));
+        return new self(Buffer::factory(fopen($file, 'rb')));
     }
 
     /**
      * @param string $str
-     * @return \SPSS\Sav\Reader
+     *
+     * @return Reader
      */
     public static function fromString($str)
     {
@@ -71,7 +87,15 @@ class Reader
     }
 
     /**
-     * @return $this
+     * @return self
+     */
+    public function readMetaData()
+    {
+        return $this->readHeader()->readBody();
+    }
+
+    /**
+     * @return self
      */
     public function read()
     {
@@ -79,7 +103,7 @@ class Reader
     }
 
     /**
-     * @return $this
+     * @return self
      */
     public function readHeader()
     {
@@ -89,27 +113,32 @@ class Reader
     }
 
     /**
-     * @return $this
+     * @return self
      */
     public function readBody()
     {
-        if (! $this->header) {
+        if (!$this->header) {
             $this->readHeader();
         }
 
         // TODO: refactory
         $infoCollection = new Record\InfoCollection();
+        $tempVars       = [];
+        $posVar         = 0;
 
         do {
             $recType = $this->_buffer->readInt();
             switch ($recType) {
                 case Record\Variable::TYPE:
-                    $this->variables[] = Record\Variable::fill($this->_buffer);
+                    $variable               = Record\Variable::fill($this->_buffer);
+                    $variable->realPosition = $posVar;
+                    $tempVars[]             = $variable;
+                    $posVar++;
                     break;
                 case Record\ValueLabel::TYPE:
                     $this->valueLabels[] = Record\ValueLabel::fill($this->_buffer, [
                         // TODO: refactory
-                        'variables' => $this->variables,
+                        'variables' => $tempVars,
                     ]);
                     break;
                 case Record\Info::TYPE:
@@ -119,18 +148,76 @@ class Reader
                     $this->documents = Record\Document::fill($this->_buffer)->toArray();
                     break;
             }
-        } while ($recType != Record\Data::TYPE);
+        } while (Record\Data::TYPE !== $recType);
+
+        // Excluding the records that are creating only as a consequence of very long string records
+        // from the variables computation.
+        $veryLongStrings = [];
+        if (isset($this->info[Record\Info\VeryLongString::SUBTYPE])) {
+            $veryLongStrings = $this->info[Record\Info\VeryLongString::SUBTYPE]->toArray();
+        }
+
+        $segmentsCount = 0;
+        foreach ($tempVars as $index => $var) {
+            // Skip blank records from the variables computation
+            if (-1 !== $var->width) {
+                if ($segmentsCount <= 0) {
+                    $segmentsCount = Utils::widthToSegments(
+                        isset($veryLongStrings[$var->name]) ?
+                            $veryLongStrings[$var->name] : $var->width
+                    );
+                    $this->variables[] = $var;
+                }
+                $segmentsCount--;
+            }
+        }
 
         return $this;
     }
 
     /**
-     * @return $this
+     * @return self
      */
     public function readData()
     {
         $this->data = Record\Data::fill($this->_buffer)->toArray();
 
         return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function readCase()
+    {
+        if (!isset($this->record)) {
+            $this->record = Record\Data::create();
+        }
+
+        $this->lastCase++;
+
+        if (($this->lastCase >= 0) && ($this->lastCase < $this->_buffer->context->header->casesCount)) {
+            $this->record->readCase($this->_buffer, $this->lastCase);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCaseNumber()
+    {
+        return $this->lastCase;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCase()
+    {
+        return $this->record->getRow();
     }
 }

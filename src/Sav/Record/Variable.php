@@ -25,9 +25,14 @@ class Variable extends Record
      * For a short string variable or the first part of a long string variable, this is set to the width of the string.
      * For the second and subsequent parts of a long string variable, set to -1, and the remaining fields in the structure are ignored.
      *
-     * @var int Variable width.
+     * @var int variable width
      */
     public $width;
+
+    /**
+     * The real record position of the variable inside the file.
+     */
+    public $realPosition;
 
     /**
      * If the variable has no missing values, set to 0.
@@ -35,16 +40,17 @@ class Variable extends Record
      * If the variable has a range for missing variables, set to -2;
      * if the variable has a range for missing variables plus a single discrete value, set to -3.
      * A long string variable always has the value 0 here.
-     * A separate record indicates missing values for long string variables
+     * A separate record indicates missing values for long string variables.
      *
      * @var int
+     *
      * @see \SPSS\Sav\Record\Info\LongStringMissingValues
      */
     public $missingValuesFormat = 0;
 
     /**
      * Print format for this variable.
-     * [decimals, width, format, 0]
+     * [decimals, width, format, 0].
      *
      * @var array
      */
@@ -52,7 +58,7 @@ class Variable extends Record
 
     /**
      * Write format for this variable.
-     * [decimals, width, format, 0]
+     * [decimals, width, format, 0].
      *
      * @var array
      */
@@ -63,7 +69,7 @@ class Variable extends Record
      * Subsequent characters may also be digits, octothorpes (‘#’), dollar signs (‘$’), underscores (‘_’), or full stops (‘.’).
      * The variable name is padded on the right with spaces.
      *
-     * @var string Variable name.
+     * @var string variable name
      */
     public $name;
 
@@ -94,6 +100,7 @@ class Variable extends Record
      * Returns true if WIDTH is a very long string width, false otherwise.
      *
      * @param int $width
+     *
      * @return int
      */
     public static function isVeryLong($width)
@@ -101,35 +108,29 @@ class Variable extends Record
         return $width > self::REAL_VLS_CHUNK;
     }
 
-    /**
-     * @param Buffer $buffer
-     */
     public function read(Buffer $buffer)
     {
-        $this->width = $buffer->readInt();
-        $hasLabel = $buffer->readInt();
+        $this->width               = $buffer->readInt();
+        $hasLabel                  = $buffer->readInt();
         $this->missingValuesFormat = $buffer->readInt();
-        $this->print = Utils::intToBytes($buffer->readInt());
-        $this->write = Utils::intToBytes($buffer->readInt());
-        $this->name = rtrim($buffer->readString(8));
-        if ($hasLabel) {
+        $this->print               = Utils::intToBytes($buffer->readInt());
+        $this->write               = Utils::intToBytes($buffer->readInt());
+        $this->name                = rtrim($buffer->readString(8));
+        if ($hasLabel !== 0) {
             $labelLength = $buffer->readInt();
             $this->label = $buffer->readString($labelLength, 4);
         }
-        if ($this->missingValuesFormat != 0) {
-            for ($i = 0; $i < abs($this->missingValuesFormat); $i++) {
+        if (0 !== $this->missingValuesFormat) {
+            for ($i = 0, $iMax = abs($this->missingValuesFormat); $i < $iMax; $i++) {
                 $this->missingValues[] = $buffer->readDouble();
             }
         }
     }
 
-    /**
-     * @param Buffer $buffer
-     */
     public function write(Buffer $buffer)
     {
         $seg0width = Utils::segmentAllocWidth($this->width, 0);
-        $hasLabel = ! empty($this->label);
+        $hasLabel  = !empty($this->label);
 
         $buffer->writeInt(self::TYPE);
         $buffer->writeInt($seg0width);
@@ -141,12 +142,12 @@ class Variable extends Record
 
         if ($hasLabel) {
             // Maxlength is 255 bytes, since we write utf8 a char can be multiple bytes
-            $labelLength = min(mb_strlen($this->label), 255);
-            $label = mb_substr($this->label, 0, $labelLength);
+            $labelLength      = min(mb_strlen($this->label), 255);
+            $label            = mb_substr($this->label, 0, $labelLength);
             $labelLengthBytes = mb_strlen($label, '8bit');
             while ($labelLengthBytes > 255) {
                 // Strip one char, can be multiple bytes
-                $label = mb_substr($label, 0, -1);
+                $label            = mb_substr($label, 0, -1);
                 $labelLengthBytes = mb_strlen($label, '8bit');
             }
             $buffer->writeInt($labelLengthBytes);
@@ -154,9 +155,9 @@ class Variable extends Record
         }
 
         // TODO: test
-        if ($this->missingValuesFormat) {
+        if ($this->missingValuesFormat !== 0) {
             foreach ($this->missingValues as $val) {
-                if ($this->width == 0) {
+                if (0 === $this->width) {
                     $buffer->writeDouble($val);
                 } else {
                     $buffer->writeString($val, 8);
@@ -164,16 +165,15 @@ class Variable extends Record
             }
         }
 
-        // I think we don't need an empty record
-        //$this->writeBlank($buffer, $seg0width);
+        // We need an empty record
+        $this->writeBlank($buffer, $seg0width);
 
         // Write additional segments for very long string variables.
-        if (self::isVeryLong($this->width)) {
-            $this->writeBlank($buffer, $seg0width);
+        if (self::isVeryLong($this->width) !== 0) {
             $segmentCount = Utils::widthToSegments($this->width);
             for ($i = 1; $i < $segmentCount; $i++) {
                 $segmentWidth = Utils::segmentAllocWidth($this->width, $i);
-                $format = Utils::bytesToInt([0, 1, max($segmentWidth, 1), 0]);
+                $format       = Utils::bytesToInt([0, 1, max($segmentWidth, 1), 0]);
                 $buffer->writeInt(self::TYPE);
                 $buffer->writeInt($segmentWidth);
                 $buffer->writeInt($hasLabel); // No variable label
@@ -192,8 +192,8 @@ class Variable extends Record
     }
 
     /**
-     * @param Buffer $buffer
-     * @param int $width
+     * @param  Buffer  $buffer
+     * @param  int  $width
      */
     public function writeBlank(Buffer $buffer, $width)
     {
@@ -212,6 +212,7 @@ class Variable extends Record
 
     /**
      * @param int $seg
+     *
      * @return string
      */
     public function getSegmentName($seg = 0)
@@ -219,7 +220,7 @@ class Variable extends Record
         // TODO: refactory
         $name = $this->name;
         $name = mb_substr($name, 0, 6);
-        $name .=  $seg;
+        $name .= $seg;
 
         return mb_strtoupper($name);
     }
